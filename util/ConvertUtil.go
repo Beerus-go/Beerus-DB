@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+const (
+	Field = "field"
+)
+
 // MapToStruct map to struct
 func MapToStruct(rows map[string]string, pointResult interface{}, result interface{}) {
 	var paramType = reflect.TypeOf(result)
@@ -23,13 +27,22 @@ func MapToStruct(rows map[string]string, pointResult interface{}, result interfa
 func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]string, i int) {
 	var structField = paramType.Field(i)
 	fieldName := structField.Name
+	fieldTag := structField.Tag
 	fieldType := structField.Type.Name()
 
 	field := paramElem.FieldByName(fieldName)
 	paramValue := rows[fieldName]
 
 	if paramValue == "" {
-		return
+		if fieldTag != "" {
+			fieldParamName := fieldTag.Get(Field)
+			if fieldParamName != "" {
+				paramValue = rows[fieldParamName]
+			}
+		}
+		if paramValue == "" {
+			return
+		}
 	}
 
 	// Unify the handling of numeric variable types to remove the bit identifiers and facilitate the following judgments
