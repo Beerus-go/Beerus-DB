@@ -1,10 +1,10 @@
 package test
 
 import (
+	"github.com/yuyenews/Beerus-DB/commons/util"
 	"github.com/yuyenews/Beerus-DB/db"
 	"github.com/yuyenews/Beerus-DB/operation"
 	"github.com/yuyenews/Beerus-DB/pool"
-	"github.com/yuyenews/Beerus-DB/util"
 	"log"
 	"testing"
 )
