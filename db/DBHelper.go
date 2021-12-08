@@ -4,7 +4,7 @@ import "database/sql"
 
 // Update Add, delete and change operations
 func Update(connection *sql.DB, sql string, params []interface{}) (sql.Result, error) {
-	result, err := connection.Exec(sql, params)
+	result, err := connection.Exec(sql, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -13,7 +13,7 @@ func Update(connection *sql.DB, sql string, params []interface{}) (sql.Result, e
 
 // UpdateByTx Add, delete and change operations
 func UpdateByTx(tx *sql.Tx, sql string, params []interface{}) (sql.Result, error) {
-	result, err := tx.Exec(sql, params)
+	result, err := tx.Exec(sql, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -22,18 +22,7 @@ func UpdateByTx(tx *sql.Tx, sql string, params []interface{}) (sql.Result, error
 
 // SelectList Query list based on sql and parameters
 func SelectList(connection *sql.DB, sql string, params []interface{}) ([]map[string]string, error) {
-	rows, err := connection.Query(sql, params)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return toMap(rows)
-}
-
-// SelectListByTx Query list based on sql and parameters
-func SelectListByTx(tx *sql.Tx, sql string, params []interface{}) ([]map[string]string, error) {
-	rows, err := tx.Query(sql, params)
+	rows, err := connection.Query(sql, params...)
 
 	if err != nil {
 		return nil, err

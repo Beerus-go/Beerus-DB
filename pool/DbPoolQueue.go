@@ -1,23 +1,25 @@
 package pool
 
 import (
-	"database/sql"
 	"sync"
 )
 
+// DbPoolQueueItem Elements inside the queue
 type DbPoolQueueItem struct {
-	Conn *sql.DB
+	Conn *Connection
 	Next *DbPoolQueueItem
 }
 
+// DbPoolQueue Queue
 type DbPoolQueue struct {
 	First *DbPoolQueueItem
 	Last  *DbPoolQueueItem
-	Size  int64
+	Size  int
 	mutex sync.Mutex
 }
 
-func (dp *DbPoolQueue) Add(item *sql.DB) {
+// Add connections to the queue
+func (dp *DbPoolQueue) Add(item *Connection) {
 	dp.mutex.Lock()
 
 	defer dp.mutex.Unlock()
@@ -37,7 +39,8 @@ func (dp *DbPoolQueue) Add(item *sql.DB) {
 	dp.Size++
 }
 
-func (dp *DbPoolQueue) Pop() *sql.DB {
+// Poll Taking elements out of the queue
+func (dp *DbPoolQueue) Poll() *Connection {
 	dp.mutex.Lock()
 
 	defer dp.mutex.Unlock()

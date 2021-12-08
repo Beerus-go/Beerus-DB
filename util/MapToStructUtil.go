@@ -23,6 +23,59 @@ func MapToStruct(rows map[string]string, pointResult interface{}, result interfa
 	}
 }
 
+// StructToMap struct to map
+func StructToMap(pointData interface{}, data interface{}) map[string]interface{} {
+
+	result := make(map[string]interface{})
+
+	var paramType = reflect.TypeOf(data)
+	var paramElem = reflect.ValueOf(pointData).Elem()
+
+	fieldNum := paramType.NumField()
+	for i := 0; i < fieldNum; i++ {
+		var structField = paramType.Field(i)
+		fieldName := structField.Name
+		fieldTag := structField.Tag
+		fieldType := structField.Type.Name()
+		field := paramElem.FieldByName(fieldName)
+
+		if fieldTag != "" {
+			fieldTagName := fieldTag.Get(Field)
+			if fieldTagName != "" {
+				fieldName = fieldTagName
+			}
+		}
+
+		result[fieldName] = getValue(field, fieldType)
+	}
+
+	return result
+}
+
+// getValue get the value of the field
+func getValue(field reflect.Value, fieldType string) interface{} {
+	// Unify the handling of numeric variable types to remove the bit identifiers and facilitate the following judgments
+	var fType = GetFieldType(fieldType)
+	if fType != "" {
+		fieldType = fType
+	}
+
+	switch fieldType {
+	case commons.Int:
+		return field.Int()
+	case commons.Uint:
+		return field.Uint()
+	case commons.Float:
+		return field.Float()
+	case commons.Bool:
+		return field.Bool()
+	case commons.String:
+		return field.String()
+	}
+
+	return nil
+}
+
 // setValue Assigning values to fields
 func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]string, i int) {
 	var structField = paramType.Field(i)
@@ -89,7 +142,7 @@ func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]s
 	}
 }
 
-// GetFieldType 获取字段类型
+// GetFieldType get field type
 func GetFieldType(fieldType string) string {
 	if strings.HasPrefix(fieldType, commons.Int) {
 		return commons.Int

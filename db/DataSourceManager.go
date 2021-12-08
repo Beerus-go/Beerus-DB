@@ -1,16 +1,17 @@
 package db
 
 import (
-	"database/sql"
 	"github.com/yuyenews/Beerus-DB/pool"
 )
 
 var dataSource = make(map[string]*pool.DbPool)
 
+// AddDataSource Add DbPool as a data source
 func AddDataSource(name string, dbPool *pool.DbPool) {
 	dataSource[name] = dbPool
 }
 
-func GetDataSource(name string) (*sql.DB, error) {
+// GetConnection Obtaining a connection from a specified data source
+func GetConnection(name string) (*pool.Connection, error) {
 	return dataSource[name].GetConn()
 }

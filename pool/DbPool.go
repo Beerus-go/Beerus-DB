@@ -7,50 +7,67 @@ import (
 	"sync"
 )
 
+// DbPool Connection Pool
 type DbPool struct {
 	Url          string
 	InitialSize  int
 	ExpSize      int
-	MaxActive    int
-	nowActive    int
+	MaxOpen      int
+	numOpen      int
+	MinOpen      int
 	isInitialize bool
 	PoolQueue    DbPoolQueue
 	mutex        sync.Mutex
 }
 
-func (pool *DbPool) GetConn() (*sql.DB, error) {
+// GetConn Get a connection
+func (pool *DbPool) GetConn() (*Connection, error) {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
-	err := pool.valid()
+	// Verify connection pool configuration parameters and create initialized connections
+	err := pool.validAndInit()
 	if err != nil {
 		return nil, err
 	}
 
-	conn := pool.PoolQueue.Pop()
+	// Get a connection from the queue
+	conn := pool.PoolQueue.Poll()
 
+	// If there are no more connections in the queue, expand the connections and fetch them from the queue once more
 	if conn == nil {
 		err := pool.expansion()
 		if err != nil {
 			return nil, err
-
 		}
-		conn = pool.PoolQueue.Pop()
+		conn = pool.PoolQueue.Poll()
 	}
+	if conn != nil {
+		conn.Status = true
+	}
+
+	// If idle connections are already <= minimum connections, expand connections
+	if pool.PoolQueue.Size <= pool.MinOpen {
+		pool.expansion()
+	}
+
 	return conn, nil
 }
 
-func (pool *DbPool) Close(conn *sql.DB) {
+// Close Returning used connections to the connection pool
+func (pool *DbPool) Close(conn *Connection) {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
-	conn.Close()
-	pool.nowActive--
+	conn.Status = false
+	pool.numOpen--
+	pool.PoolQueue.Add(conn)
 }
 
+// expansion Expanded Connectivity
 func (pool *DbPool) expansion() error {
-	if pool.nowActive < pool.MaxActive {
-		remaining := pool.MaxActive - pool.nowActive
+	if pool.numOpen < pool.MaxOpen {
+		remaining := pool.MaxOpen - pool.numOpen
 		if remaining >= pool.ExpSize {
 			return pool.createConn(pool.ExpSize)
 		}
@@ -58,38 +75,58 @@ func (pool *DbPool) expansion() error {
 		return pool.createConn(remaining)
 	}
 
-	return errors.New("the current number of active connections has exceeded MaxActive")
+	return errors.New("the current number of active connections has exceeded MaxOpen")
 }
 
+// createConn Create the specified number of connections to the queue
 func (pool *DbPool) createConn(size int) error {
 	for i := 0; i < size; i++ {
 		db, err := sql.Open("mysql", pool.Url)
 		if err != nil {
 			return err
 		}
-		pool.PoolQueue.Add(db)
+
+		conn := new(Connection)
+		conn.DB = db
+		conn.Pool = pool
+		conn.Status = true
+
+		pool.PoolQueue.Add(conn)
 	}
 
-	pool.nowActive += size
+	pool.numOpen += size
 	return nil
 }
 
-func (pool *DbPool) valid() error {
+// validAndInit Verify connection pool configuration parameters and create initialized connections
+func (pool *DbPool) validAndInit() error {
 	if pool.isInitialize == false {
 		if pool.Url == "" {
 			return errors.New("url must not be empty")
 		}
 
 		if pool.ExpSize <= 0 {
-			return errors.New("ExpSize must not be empty")
+			return errors.New("ExpSize must > 0")
 		}
 
 		if pool.InitialSize <= 0 {
-			return errors.New("InitialSize must not be empty")
+			return errors.New("InitialSize must > 0")
 		}
 
-		if pool.MaxActive <= 0 {
-			return errors.New("MaxActive must not be empty")
+		if pool.InitialSize < pool.MinOpen {
+			return errors.New("InitialSize cannot be smaller than MinOpen")
+		}
+
+		if pool.MaxOpen <= 0 {
+			return errors.New("MaxOpen must > 0")
+		}
+
+		if pool.MinOpen < 0 {
+			return errors.New("MaxOpen must >= 0")
+		}
+
+		if pool.MaxOpen < pool.MinOpen {
+			return errors.New("MinOpen must not be larger than MaxOpen")
 		}
 
 		pool.createConn(pool.InitialSize)
