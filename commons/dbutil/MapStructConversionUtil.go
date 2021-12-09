@@ -1,4 +1,4 @@
-package util
+package dbutil
 
 import (
 	"github.com/yuyenews/Beerus-DB/commons"
@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	Field = "field"
+	Field       = "field"
+	Ignore      = "ignore"
+	ignoreValue = "true"
 )
 
 // MapToStruct map to struct
@@ -25,6 +27,11 @@ func MapToStruct(rows map[string]string, pointResult interface{}, result interfa
 
 // StructToMap struct to map
 func StructToMap(pointData interface{}, data interface{}) map[string]interface{} {
+	return StructToMapIgnore(pointData, data, false)
+}
+
+// StructToMapIgnore struct to map
+func StructToMapIgnore(pointData interface{}, data interface{}, isIgnore bool) map[string]interface{} {
 
 	result := make(map[string]interface{})
 
@@ -43,6 +50,14 @@ func StructToMap(pointData interface{}, data interface{}) map[string]interface{}
 			fieldTagName := fieldTag.Get(Field)
 			if fieldTagName != "" {
 				fieldName = fieldTagName
+			}
+
+			if isIgnore {
+				ignore := fieldTag.Get(Ignore)
+				if ignore != "" && ignore == ignoreValue {
+					result[fieldName] = nil
+					continue
+				}
 			}
 		}
 

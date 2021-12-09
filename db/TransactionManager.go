@@ -3,7 +3,9 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"github.com/yuyenews/Beerus-DB/commons/dbutil"
 	"github.com/yuyenews/Beerus-DB/pool"
+	"strconv"
 )
 
 type TxData struct {
@@ -11,20 +13,34 @@ type TxData struct {
 	Conn *pool.Connection
 }
 
-var txMaps = make(map[string]map[string]*TxData)
+var txMaps = make(map[uint64]map[string]*TxData)
+
+var snowflake *dbutil.SnowFlake
 
 // Transaction Open a transaction
-func Transaction() (string, error) {
+func Transaction() (uint64, error) {
+	var err error
+	var snowflakeId uint64
+
+	if snowflake == nil {
+		snowflake, err = dbutil.New(1)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	snowflakeId, err = snowflake.Generate()
+
 	connMaps := make(map[string]*TxData)
 	for key, val := range dataSource {
 		conn, err := val.GetConn()
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 
 		tx, err := conn.DB.Begin()
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 
 		txData := new(TxData)
@@ -33,13 +49,13 @@ func Transaction() (string, error) {
 		connMaps[key] = txData
 	}
 
-	txMaps[""] = connMaps
+	txMaps[snowflakeId] = connMaps
 
-	return "", nil
+	return snowflakeId, nil
 }
 
 // Commit transaction
-func Commit(id string) error {
+func Commit(id uint64) error {
 	connMaps := txMaps[id]
 	if connMaps == nil || len(connMaps) <= 0 {
 		return errors.New("")
@@ -55,7 +71,7 @@ func Commit(id string) error {
 }
 
 // Rollback transactions
-func Rollback(id string) error {
+func Rollback(id uint64) error {
 	connMaps := txMaps[id]
 	if connMaps == nil || len(connMaps) <= 0 {
 		return errors.New("")
@@ -71,10 +87,10 @@ func Rollback(id string) error {
 }
 
 // GetTx Get the corresponding transaction manager based on ID and data source name
-func GetTx(id string, dataSourceName string) (*sql.Tx, error) {
+func GetTx(id uint64, dataSourceName string) (*sql.Tx, error) {
 	txMap := txMaps[id]
 	if txMap == nil {
-		return nil, errors.New("no transaction operation with id " + id + " exists")
+		return nil, errors.New("no transaction operation with id " + strconv.FormatUint(id, 10) + " exists")
 	}
 
 	dataMap := txMap[dataSourceName]

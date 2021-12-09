@@ -1,9 +1,10 @@
 package test
 
 import (
-	"github.com/yuyenews/Beerus-DB/commons/util"
+	"github.com/yuyenews/Beerus-DB/commons/dbutil"
 	"github.com/yuyenews/Beerus-DB/db"
 	"github.com/yuyenews/Beerus-DB/operation"
+	"github.com/yuyenews/Beerus-DB/operation/entity"
 	"github.com/yuyenews/Beerus-DB/pool"
 	"log"
 	"testing"
@@ -16,10 +17,10 @@ func TestUpdate(t *testing.T) {
 	param[0] = "TestUpdate"
 	param[1] = 1
 
-	operation.GetDBTemplate("dbPoolTest").Update("update xt_message_board set user_name = ? where id = ?", param)
+	operation.GetDBTemplate("dbPoolTest").Exec("update xt_message_board set user_name = ? where id = ?", param)
 
 	param2 := make([]interface{}, 1)
-	param2[0] = param[0]
+	param2[0] = param[1]
 	result, err := operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
 
 	if err != nil {
@@ -35,11 +36,9 @@ func TestUpdate(t *testing.T) {
 func TestUpdateByMap(t *testing.T) {
 	initDbPool()
 
-	res := ResultStruct{}
-	res.Id = 1
-	res.UserName = "TestUpdateByMap"
+	res := ResultStruct{Id: 1, UserName: "TestUpdateByMap"}
 
-	operation.GetDBTemplate("dbPoolTest").UpdateByMap("update xt_message_board set user_name = {user_name} where id = {id}", util.StructToMap(&res, res))
+	operation.GetDBTemplate("dbPoolTest").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
 
 	param2 := make([]interface{}, 1)
 	param2[0] = res.Id
@@ -66,11 +65,9 @@ func TestUpdateTx(t *testing.T) {
 		return
 	}
 
-	res := ResultStruct{}
-	res.Id = 1
-	res.UserName = "TestUpdateTx"
+	res := ResultStruct{Id: 1, UserName: "TestUpdateTx"}
 
-	ss, err := operation.GetDBTemplateTx(id, "dbPoolTest").UpdateByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", util.StructToMap(&res, res))
+	ss, err := operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
 	if err != nil {
 		db.Rollback(id)
 		t.Error("TestUpdateTx: " + err.Error())
@@ -96,13 +93,15 @@ func TestUpdateTx(t *testing.T) {
 
 	// ------------------------------- test commit -------------------------------
 
+	res.UserName = "TestUpdateTxCommit"
+
 	id, err = db.Transaction()
 	if err != nil {
 		t.Error("TestUpdateTx: " + err.Error())
 		return
 	}
 
-	ss, err = operation.GetDBTemplateTx(id, "dbPoolTest").UpdateByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", util.StructToMap(&res, res))
+	ss, err = operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
 	if err != nil {
 		db.Rollback(id)
 		t.Error("TestUpdateTx: " + err.Error())
@@ -110,10 +109,22 @@ func TestUpdateTx(t *testing.T) {
 	}
 	log.Println(ss.RowsAffected())
 
-	db.Commit(id)
-
 	param2 = make([]interface{}, 1)
 	param2[0] = res.Id
+	result, err = operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
+
+	if err != nil {
+		t.Error("TestUpdateTx: " + err.Error())
+		return
+	}
+
+	if result["user_name"] == res.UserName {
+		t.Error("TestUpdateTx: The transaction has taken effect before it has been committed")
+		return
+	}
+
+	db.Commit(id)
+
 	result, err = operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
 
 	if err != nil {
@@ -139,8 +150,8 @@ func TestSelectList(t *testing.T) {
 		return
 	}
 	for _, row := range resultMap {
-		res := new(ResultStruct)
-		util.MapToStruct(row, res, *res)
+		res := ResultStruct{}
+		dbutil.MapToStruct(row, &res, res)
 
 		print(res.Id)
 		print(" | ")
@@ -161,8 +172,8 @@ func TestSelectListNoParameters(t *testing.T) {
 		return
 	}
 	for _, row := range resultMap {
-		res := new(ResultStruct)
-		util.MapToStruct(row, res, *res)
+		res := ResultStruct{}
+		dbutil.MapToStruct(row, &res, res)
 
 		print(res.Id)
 		print(" | ")
@@ -177,17 +188,157 @@ func TestSelectListNoParameters(t *testing.T) {
 func TestSelectListByMap(t *testing.T) {
 	initDbPool()
 
-	res := ResultStruct{}
-	res.Id = 1
-	resultMap, err := operation.GetDBTemplate("dbPoolTest").SelectListByMap("select * from xt_message_board where id < {id}", util.StructToMap(&res, res))
+	res := ResultStruct{Id: 1}
+
+	resultMap, err := operation.GetDBTemplate("dbPoolTest").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res, res))
 	if err != nil {
 		t.Error("TestSelectListByMap: " + err.Error())
 		return
 	}
 
 	for _, row := range resultMap {
-		res := new(ResultStruct)
-		util.MapToStruct(row, res, *res)
+		res := ResultStruct{}
+		dbutil.MapToStruct(row, &res, res)
+
+		print(res.Id)
+		print(" | ")
+		print(res.UserName)
+		print(" | ")
+		print(res.UpdateTime)
+		print(" | ")
+		println(res.UserEmail)
+	}
+}
+
+func TestNoSqlSelect(t *testing.T) {
+	initDbPool()
+
+	conditions := make([]*entity.Condition, 0)
+	conditions = append(conditions, &entity.Condition{Key: "id > ?", Val: 10})
+	conditions = append(conditions, &entity.Condition{Key: "and id < ?", Val: 23})
+	conditions = append(conditions, &entity.Condition{Key: "order by id desc", Val: entity.NotWhere})
+
+	resultMap, err := operation.GetDBTemplate("dbPoolTest").Select("xt_message_board", conditions)
+
+	if err != nil {
+		t.Error("TestSelectListByMap: " + err.Error())
+		return
+	}
+
+	for _, row := range resultMap {
+		res := ResultStruct{}
+		dbutil.MapToStruct(row, &res, res)
+
+		print(res.Id)
+		print(" | ")
+		print(res.UserName)
+		print(" | ")
+		print(res.UpdateTime)
+		print(" | ")
+		println(res.UserEmail)
+	}
+}
+
+func TestNoSqlUpdate(t *testing.T) {
+	initDbPool()
+
+	conditions := make([]*entity.Condition, 0)
+	conditions = append(conditions, &entity.Condition{Key: "id = ?", Val: 1})
+
+	data := ResultStruct{UserName: "TestNoSqlUpdate"}
+	operation.GetDBTemplate("dbPoolTest").Update("xt_message_board", dbutil.StructToMapIgnore(&data, data, true), conditions)
+
+	param2 := make([]interface{}, 1)
+	param2[0] = 1
+	result, err := operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
+
+	if err != nil {
+		t.Error("TestNoSqlUpdate: " + err.Error())
+		return
+	}
+
+	if result["user_name"] != data.UserName {
+		t.Error("TestNoSqlUpdate: Failed to modify, after modification, user_name is not equal to the specified value")
+	}
+}
+
+func TestNoSqlInsert(t *testing.T) {
+	initDbPool()
+
+	data := ResultStruct{
+		UserName:   "TestNoSqlInsert",
+		UserEmail:  "xxxxx@163.com",
+		UpdateTime: "2021-12-09 13:50:00",
+	}
+
+	result, err := operation.GetDBTemplate("dbPoolTest").Insert("xt_message_board", dbutil.StructToMapIgnore(&data, data, true))
+	if err != nil {
+		t.Error("TestNoSqlInsert: " + err.Error())
+		return
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		t.Error("TestNoSqlInsert: " + err.Error())
+		return
+	}
+
+	param2 := make([]interface{}, 1)
+	param2[0] = id
+	result2, err := operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
+
+	if err != nil {
+		t.Error("TestNoSqlInsert: " + err.Error())
+		return
+	}
+
+	if result2["user_name"] != data.UserName {
+		t.Error("TestNoSqlInsert: Failed to insert, Unsuccessful data insertion")
+	}
+}
+
+func TestNoSqlDelete(t *testing.T) {
+	initDbPool()
+
+	conditions := make([]*entity.Condition, 0)
+	conditions = append(conditions, &entity.Condition{Key: "id = ?", Val: 2})
+
+	_, err := operation.GetDBTemplate("dbPoolTest").Delete("xt_message_board", conditions)
+
+	if err != nil {
+		t.Error("TestNoSqlDelete: " + err.Error())
+		return
+	}
+
+	param2 := make([]interface{}, 1)
+	param2[0] = 2
+	result2, err := operation.GetDBTemplate("dbPoolTest").SelectOne("select * from xt_message_board where id = ?", param2)
+
+	if err != nil {
+		t.Error("TestNoSqlInsert: " + err.Error())
+		return
+	}
+
+	if result2 != nil {
+		t.Error("TestNoSqlInsert: Data deletion failure")
+		return
+	}
+}
+
+func TestSelectPage(t *testing.T) {
+	initDbPool()
+
+	param := entity.PageParam{CurrentPage: 2, PageSize: 5}
+	result, err := operation.GetDBTemplate("dbPoolTest").SelectPage("select * from xt_message_board", param)
+
+	if err != nil {
+		t.Error("TestSelectPage: " + err.Error())
+		return
+	}
+
+	for _, row := range result.DataList {
+		res := ResultStruct{}
+		dbutil.MapToStruct(row, &res, res)
 
 		print(res.Id)
 		print(" | ")
@@ -201,9 +352,8 @@ func TestSelectListByMap(t *testing.T) {
 
 func initDbPool() {
 	dbPool := new(pool.DbPool)
-
 	dbPool.InitialSize = 1
-	dbPool.ExpSize = 1
+	dbPool.ExpandSize = 1
 	dbPool.MaxOpen = 1
 	dbPool.MinOpen = 0
 	dbPool.Url = "root:123456@(127.0.0.1:3306)/xt-manager"
@@ -212,7 +362,7 @@ func initDbPool() {
 }
 
 type ResultStruct struct {
-	Id         int    `field:"id"`
+	Id         int    `field:"id" ignore:"true"`
 	UserName   string `field:"user_name"`
 	UserEmail  string `field:"user_email"`
 	UpdateTime string `field:"update_time"`

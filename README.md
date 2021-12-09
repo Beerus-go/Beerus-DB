@@ -2,153 +2,135 @@
     <a href="http://www.ww.com">Beerus-DB</a> ·
     <img src="https://img.shields.io/badge/licenes-MIT-brightgreen.svg"/> 
     <img src="https://img.shields.io/badge/golang-1.17.3-brightgreen.svg"/> 
-    <img src="https://img.shields.io/badge/release-master-brightgreen.svg"/>
+    <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg"/>
 </h1>
 
-Beerus is a web framework developed entirely in go, 
-whether it is json passing, form submission, formdata, etc., 
-it is easy to extract parameters from the request into the structure and automatically complete parameter validation.
-
-- ***NetWork:*** Based on go's own package: net/http, with many extensions added
-
-- ***WebSocket:*** Extensions to net/http to automatically analyze WebSocket requests and upgrade to the websocket protocol for message listening and sending and receiving
-
-- ***Http:*** Most of the functions are developed based on net/http, the Json pass-through is handled, and each request is automatically routed to the corresponding function
-
-- ***Enhanced routing management:*** Enhanced the way handlers are configured and unified through routing, so that each request will be automatically routed to the corresponding function
-
-- ***Automatic processing parameters:*** can automatically extract any type of parameter from request to struct, and support automatic parameter validation, regular, range, non-empty validation, and custom hint messages
-
+Beerus-DB is a database operation framework, currently only supports Mysql, 
+single-table additions, deletions, and changes do not need to write sql, 
+multi-table complex queries can write their own sql, very easy to use and flexible
 
 ## Installation
 
 ```shell
-go get github.com/yuyenews/Beerus
+go get github.com/yuyenews/Beerus-DB v1.1.0
 ```
 
 ## Documentation
 
 ## Examples
 
-### HTTP example
+###  No sql additions, deletions, changes and select example
 
-Create a function to manage the routing configuration
-
+Query specified table data based on custom conditions
 ```go
-func CreateRoute() {
-	// post route example
-    route.POST("/example/post", func (req *commons.BeeRequest, res *commons.BeeResponse) {
-        
-        res.SendJson(`{"msg":"SUCCESS"}`)
-    })
+conditions := make([]*entity.Condition,0)
+conditions = append(conditions, &entity.Condition{Key:"id > ?", Val: 10})
+conditions = append(conditions, &entity.Condition{Key:"and user_name = ?", Val: "bee"})
+conditions = append(conditions, &entity.Condition{Key: "order by create_time desc", Val: entity.NotWhere})
 
-    // get route example
-    route.GET("/example/get", func (req *commons.BeeRequest, res *commons.BeeResponse) {
-    
-        res.SendJson(`{"msg":"SUCCESS"}`)
-    })
-}
+resultMap, err := operation.GetDBTemplate("Data source name").Select("table name", conditions)
 ```
 
-Start Service
+Update data according to conditions
 
 ```go
-func main() {
-    // Interceptors, routes, etc. Loading of data requires its own calls
-    routes.CreateRoute()
-    
-    // Listen the service and listen to port 8080
-    beerus.ListenHTTP(8080)
-}
+conditions := make([]*entity.Condition,0)
+conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 1})
+
+data := ResultStruct{UserName: "TestNoSqlUpdate"}
+operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructToMapIgnore(&data, data, true), conditions)
+
 ```
 
-If you want to put the parameters inside struct and complete the parameter checks
+Deleting data based on conditions
+```go
+conditions := make([]*entity.Condition,0)
+conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 2})
+
+_, err := operation.GetDBTemplate("Data source name").Delete("table name", conditions)
+```
+
+Insert data
 
 ```go
-func CreateRoute() {
-    // Example of parameter conversion to struct and parameter checksum
-    route.POST("/example/post", func (req *commons.BeeRequest, res *commons.BeeResponse) {
-        param := DemoParam{}
-        
-        // Extraction parameters, Generally used in scenarios where verification is not required or you want to verify manually
-        params.ToStruct(req, &param, param)
-        
-        // Separate validation of data in struct, this feature can be used independently in any case and is not limited to the routing layer.
-        var result = params.Validation(req, &param, param)
-        if result != params.SUCCESS {
-            res.SendErrorMsg(1128, result)
-            return
-        }
-        
-        // You can also convert + validate the parameters in one step
-        // Extraction of parameters + validation
-        var result = params.ToStructAndValidation(req, &param, param)
-        if result != params.SUCCESS {
-            res.SendErrorMsg(1128, result)
-            return
-        }
-        
-        
-        res.SendJson(`{"msg":"SUCCESS"}`)
-    })
-}
+data := ResultStruct{
+		UserName: "TestNoSqlInsert",
+		UserEmail: "xxxxx@163.com",
+		UpdateTime: "2021-12-09 13:50:00",
+	}
 
-// DemoParam If you have a struct like this, and you want to put all the parameters from the request into this struct
-type DemoParam struct {
-    // You can customize any field
-    // the name of the field must be exactly the same as the name of the requested parameter, and is case-sensitive
-    TestStringReception  string  `notnull:"true" msg:"TestStringReception Cannot be empty" routes:"/example/put"`
-    TestIntReception     int     `max:"123" min:"32" msg:"TestIntReception The value range must be between 32 - 123" routes:"/example/post"`
-    TestUintReception    uint    `max:"123" min:"32" msg:"TestUintReception The value range must be between 32 - 123"`
-    TestFloatReception   float32 `max:"123" min:"32" msg:"TestFloatReception The value range must be between 32 - 123"`
-    TestBoolReception    bool
-    TestStringRegReception string `reg:"^[a-z]+$" msg:"TestStringRegReception Does not meet the regular"`
-    TestBeeFileReception commons.BeeFile
-    
-    TestJsonReception []string
-}
+result, err := operation.GetDBTemplate("Data source name").Insert("table name", dbutil.StructToMapIgnore(&data, data, true))
+
 ```
 
-### WebSocket example
+### Using sql to add, delete, update and select
 
-CreateWebSocketRoute Creating websocket routes
+Add, delete, update
+
+sql can be any one of add, delete, modify
+```go
+// with struct as parameter
+res := ResultStruct{Id: 1, UserName: "TestUpdateByMap"}
+operation.GetDBTemplate("Data source name").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+
+// Using arrays as parameters
+param := make([]interface{}, 2)
+param[0] = "TestUpdate"
+param[1] = 1
+
+operation.GetDBTemplate("Data source name").Exec("update xt_message_board set user_name = ? where id = ?", param)
+
+```
+
+Select
+
+Support any query sql
+```go
+// Using arrays as parameters
+param := make([]interface{}, 1)
+param[0] = 1
+
+resultMap, err := operation.GetDBTemplate("Data source name").SelectList("select * from xt_message_board where id = ?", param)
+
+// with struct as parameter
+res := ResultStruct{Id: 1}
+resultMap, err := operation.GetDBTemplate("Data source name").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res, res))
+```
+
+Paging queries
 
 ```go
-func CreateWebSocketRoute() {
-	route.AddWebSocketRoute("/ws/test", onConnection, onMessage, onClose)
-	route.AddWebSocketRoute("/ws/test2", onConnection, onMessage, onClose)
+data := ResultStruct{
+    UserName: "TestNoSqlInsert",
+    UserEmail: "xxxxx@163.com",
 }
 
-// In order to save time, only three functions are used below. In practice, you can configure a set of functions for each route
-
-func onConnection(session *params.WebSocketSession, msg string) {
-	session.SendString("connection success")
-}
-
-func onMessage(session *params.WebSocketSession, msg string) {
-	session.SendString("I got the message.")
-}
-
-func onClose(session *params.WebSocketSession, msg string) {
-    println(msg + "-------------------------------")
-}
+param := entity.PageParam{CurrentPage: 1, PageSize: 20, Params: dbutil.StructToMap(&data, data)}
+result, err := operation.GetDBTemplate("Data source name").SelectPage("select * from xt_message_board where user_name = {user_name} and user_email = {user_email}", param)
 ```
 
-Start Service
+Transaction Management
 
 ```go
-func main() {
-    // Interceptors, routes, etc. Loading of data requires its own calls
-    routes.CreateRoute()
-    routes.CreateWebSocketRoute()
-    
-    // Listen the service and listen to port 8080
-    beerus.ListenHTTP(8080)
+id, err := db.Transaction()
+if err != nil {
+    t.Error("TestUpdateTx: " + err.Error())
+    return
 }
-```
 
-[Complete sample code](https://github.com/yuyenews/Beerus/tree/master/example)
+res := ResultStruct{Id: 1, UserName: "TestUpdateTx"}
+
+ss, err := operation.GetDBTemplateTx(id, "Data source name").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+if err != nil {
+    db.Rollback(id)
+    t.Error("Data source name: " + err.Error())
+    return
+}
+log.Println(ss.RowsAffected())
+
+db.Commmit(id)
+```
 
 ## License
 
-Beerus is [MIT licensed](https://github.com/yuyenews/Beerus/blob/master/LICENSE)
+Beerus is [MIT licensed](https://github.com/yuyenews/Beerus-DB/blob/master/LICENSE)

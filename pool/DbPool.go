@@ -11,7 +11,7 @@ import (
 type DbPool struct {
 	Url          string
 	InitialSize  int
-	ExpSize      int
+	ExpandSize   int
 	MaxOpen      int
 	numOpen      int
 	MinOpen      int
@@ -68,8 +68,8 @@ func (pool *DbPool) Close(conn *Connection) {
 func (pool *DbPool) expansion() error {
 	if pool.numOpen < pool.MaxOpen {
 		remaining := pool.MaxOpen - pool.numOpen
-		if remaining >= pool.ExpSize {
-			return pool.createConn(pool.ExpSize)
+		if remaining >= pool.ExpandSize {
+			return pool.createConn(pool.ExpandSize)
 		}
 
 		return pool.createConn(remaining)
@@ -80,6 +80,9 @@ func (pool *DbPool) expansion() error {
 
 // createConn Create the specified number of connections to the queue
 func (pool *DbPool) createConn(size int) error {
+	if size <= 0 {
+		return errors.New("the number of expansions must be greater than 0")
+	}
 	for i := 0; i < size; i++ {
 		db, err := sql.Open("mysql", pool.Url)
 		if err != nil {
@@ -105,8 +108,8 @@ func (pool *DbPool) validAndInit() error {
 			return errors.New("url must not be empty")
 		}
 
-		if pool.ExpSize <= 0 {
-			return errors.New("ExpSize must > 0")
+		if pool.ExpandSize <= 0 {
+			return errors.New("ExpandSize must > 0")
 		}
 
 		if pool.InitialSize <= 0 {
