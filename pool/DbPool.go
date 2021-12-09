@@ -16,6 +16,7 @@ type DbPool struct {
 	numOpen      int
 	MinOpen      int
 	isInitialize bool
+	TestConn     bool
 	PoolQueue    DbPoolQueue
 	mutex        sync.Mutex
 }
@@ -31,19 +32,31 @@ func (pool *DbPool) GetConn() (*Connection, error) {
 		return nil, err
 	}
 
-	// Get a connection from the queue
-	conn := pool.PoolQueue.Poll()
-
-	// If there are no more connections in the queue, expand the connections and fetch them from the queue once more
-	if conn == nil {
-		err := pool.expansion()
-		if err != nil {
-			return nil, err
-		}
+	var conn *Connection
+	for i := 0; i < 3; i++ {
+		// Get a connection from the queue
 		conn = pool.PoolQueue.Poll()
-	}
-	if conn != nil {
-		conn.Status = true
+
+		// If there are no more connections in the queue, expand the connections and fetch them from the queue once more
+		if conn == nil {
+			err := pool.expansion()
+			if err != nil {
+				return nil, err
+			}
+			conn = pool.PoolQueue.Poll()
+		}
+		if conn != nil {
+			err := conn.DB.Ping()
+			if err == nil {
+				conn.Status = true
+				break
+			}
+
+			conn.DB.Close()
+			if pool.TestConn {
+				continue
+			}
+		}
 	}
 
 	// If idle connections are already <= minimum connections, expand connections
