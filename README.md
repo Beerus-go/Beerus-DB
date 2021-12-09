@@ -21,7 +21,7 @@ go get github.com/yuyenews/Beerus-DB v1.1.0
 
 ###  No sql additions, deletions, changes and select example
 
-Query specified table data based on custom conditions
+***Query specified table data based on custom conditions***
 ```go
 conditions := make([]*entity.Condition,0)
 conditions = append(conditions, &entity.Condition{Key:"id > ?", Val: 10})
@@ -31,7 +31,7 @@ conditions = append(conditions, &entity.Condition{Key: "order by create_time des
 resultMap, err := operation.GetDBTemplate("Data source name").Select("table name", conditions)
 ```
 
-Update data according to conditions
+***Update data according to conditions***
 
 ```go
 conditions := make([]*entity.Condition,0)
@@ -42,7 +42,7 @@ operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructTo
 
 ```
 
-Deleting data based on conditions
+***Deleting data based on conditions***
 ```go
 conditions := make([]*entity.Condition,0)
 conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 2})
@@ -50,7 +50,7 @@ conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 2})
 _, err := operation.GetDBTemplate("Data source name").Delete("table name", conditions)
 ```
 
-Insert data
+***Insert data***
 
 ```go
 data := ResultStruct{
@@ -65,7 +65,7 @@ result, err := operation.GetDBTemplate("Data source name").Insert("table name", 
 
 ### Using sql to add, delete, update and select
 
-Add, delete, update
+***Add, delete, update***
 
 sql can be any one of add, delete, modify
 ```go
@@ -82,7 +82,7 @@ operation.GetDBTemplate("Data source name").Exec("update xt_message_board set us
 
 ```
 
-Select
+***Select***
 
 Support any query sql
 ```go
@@ -97,7 +97,7 @@ res := ResultStruct{Id: 1}
 resultMap, err := operation.GetDBTemplate("Data source name").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res, res))
 ```
 
-Paging queries
+***Paging queries***
 
 ```go
 data := ResultStruct{
@@ -109,7 +109,7 @@ param := entity.PageParam{CurrentPage: 1, PageSize: 20, Params: dbutil.StructToM
 result, err := operation.GetDBTemplate("Data source name").SelectPage("select * from xt_message_board where user_name = {user_name} and user_email = {user_email}", param)
 ```
 
-Transaction Management
+***Transaction Management***
 
 ```go
 id, err := db.Transaction()
