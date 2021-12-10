@@ -5,9 +5,12 @@
     <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg"/>
 </h1>
 
-Beerus-DB is a database operation framework, currently only supports Mysql, 
-single-table additions, deletions, and changes do not need to write sql, 
-multi-table complex queries can write their own sql, very easy to use and flexible
+Beerus-DB is a database operation framework, currently only supports Mysql,
+Use [go-sql-driver/mysql] to do database connection and basic operations, 
+based on this do a lot of extensions, such as, connection pool management, 
+multiple data sources, transaction management, single table no sql operation, 
+multiple tables and complex operations can write their own sql, sql support {} placeholder, 
+can use struct as parameters to operate the database, etc.
 
 ## Installation
 
