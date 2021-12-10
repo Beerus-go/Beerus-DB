@@ -2,7 +2,7 @@
     <a href="http://www.ww.com">Beerus-DB</a> ·
     <img src="https://img.shields.io/badge/licenes-MIT-brightgreen.svg"/> 
     <img src="https://img.shields.io/badge/golang-1.17.3-brightgreen.svg"/> 
-    <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg"/>
+    <img src="https://img.shields.io/badge/release-tags-brightgreen.svg"/>
 </h1>
 
 Beerus-DB is a database operation framework, currently only supports Mysql,
