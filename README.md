@@ -12,10 +12,12 @@ multi-table complex queries can write their own sql, very easy to use and flexib
 ## Installation
 
 ```shell
-go get github.com/yuyenews/Beerus-DB v1.1.0
+go get github.com/yuyenews/Beerus-DB
 ```
 
 ## Documentation
+
+[https://beeruscc.com/beerusdb](https://beeruscc.com/beerusdb)
 
 ## Examples
 
