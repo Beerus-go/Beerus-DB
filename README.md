@@ -24,7 +24,7 @@ go get github.com/yuyenews/Beerus-DB
 
 ## Examples
 
-###  No sql additions, deletions, changes and select example
+###  No sql additions, deletions, update and select example
 
 ***Query specified table data based on custom conditions***
 ```go
