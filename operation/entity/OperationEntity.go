@@ -1,13 +1,21 @@
 package entity
 
 const (
-	NotWhere = "noWhere"
+	NotWhere = "6ca6d99a-2ca3-4734-921d-f3718bb7e179"
 )
 
 // Condition Setter
 type Condition struct {
 	Key string
-	Val interface{}
+	Val []interface{}
+}
+
+// GetCondition get Condition
+func GetCondition(key string, val ...interface{}) *Condition {
+	condition := new(Condition)
+	condition.Key = key
+	condition.Val = val
+	return condition
 }
 
 // PageParam Paging entity

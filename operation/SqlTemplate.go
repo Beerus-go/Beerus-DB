@@ -44,7 +44,7 @@ func GetSql(sql *strings.Builder, params []*entity.Condition) (string, []interfa
 		key := item.Key
 		val := item.Val
 
-		if val == nil || val == "" {
+		if val == nil || len(val) < 1 {
 			log.Println("val is empty, already skipped")
 			continue
 		}
@@ -57,12 +57,23 @@ func GetSql(sql *strings.Builder, params []*entity.Condition) (string, []interfa
 		sql.WriteString(" ")
 		sql.WriteString(key)
 
-		if val != entity.NotWhere {
-			paramArray = append(paramArray, val)
+		if isNotWhere(val) {
+			continue
+		}
+		for _, va := range val {
+			paramArray = append(paramArray, va)
 		}
 	}
 
 	return sql.String(), paramArray
+}
+
+// isNotWhere is notWhere
+func isNotWhere(valArray []interface{}) bool {
+	if len(valArray) == 1 && valArray[0] == entity.NotWhere {
+		return true
+	}
+	return false
 }
 
 // GetUpdateSql Get the sql of update

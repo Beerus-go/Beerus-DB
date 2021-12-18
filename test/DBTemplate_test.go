@@ -214,9 +214,9 @@ func TestNoSqlSelect(t *testing.T) {
 	initDbPool()
 
 	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, &entity.Condition{Key: "id > ?", Val: 10})
-	conditions = append(conditions, &entity.Condition{Key: "and id < ?", Val: 23})
-	conditions = append(conditions, &entity.Condition{Key: "order by id desc", Val: entity.NotWhere})
+	conditions = append(conditions, entity.GetCondition("id > ? and user_name = ?", 10, "testTx"))
+	conditions = append(conditions, entity.GetCondition("and id < ?", 23))
+	conditions = append(conditions, entity.GetCondition("order by id desc", entity.NotWhere))
 
 	resultMap, err := operation.GetDBTemplate("dbPoolTest").Select("xt_message_board", conditions)
 
@@ -243,7 +243,7 @@ func TestNoSqlUpdate(t *testing.T) {
 	initDbPool()
 
 	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, &entity.Condition{Key: "id = ?", Val: 1})
+	conditions = append(conditions, entity.GetCondition("id = ?", 1))
 
 	data := ResultStruct{UserName: "TestNoSqlUpdate"}
 	operation.GetDBTemplate("dbPoolTest").Update("xt_message_board", dbutil.StructToMapIgnore(&data, data, true), conditions)
@@ -301,7 +301,7 @@ func TestNoSqlDelete(t *testing.T) {
 	initDbPool()
 
 	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, &entity.Condition{Key: "id = ?", Val: 2})
+	conditions = append(conditions, entity.GetCondition("id = ?", 14))
 
 	_, err := operation.GetDBTemplate("dbPoolTest").Delete("xt_message_board", conditions)
 
@@ -356,7 +356,7 @@ func initDbPool() {
 	dbPool.ExpandSize = 1
 	dbPool.MaxOpen = 1
 	dbPool.MinOpen = 0
-	dbPool.Url = "root:123456@(127.0.0.1:3306)/xt-manager"
+	dbPool.Url = "root:123456@(127.0.0.1:3306)/test"
 
 	db.AddDataSource("dbPoolTest", dbPool)
 }
