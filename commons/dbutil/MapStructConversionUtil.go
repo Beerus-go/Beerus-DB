@@ -43,7 +43,7 @@ func StructToMapIgnore(pointData interface{}, data interface{}, isIgnore bool) m
 		var structField = paramType.Field(i)
 		fieldName := structField.Name
 		fieldTag := structField.Tag
-		fieldType := structField.Type.Name()
+		fieldType := GetFieldType(structField)
 		field := paramElem.FieldByName(fieldName)
 
 		if fieldTag != "" {
@@ -69,12 +69,6 @@ func StructToMapIgnore(pointData interface{}, data interface{}, isIgnore bool) m
 
 // getValue get the value of the field
 func getValue(field reflect.Value, fieldType string) interface{} {
-	// Unify the handling of numeric variable types to remove the bit identifiers and facilitate the following judgments
-	var fType = GetFieldType(fieldType)
-	if fType != "" {
-		fieldType = fType
-	}
-
 	switch fieldType {
 	case commons.Int:
 		return field.Int()
@@ -96,9 +90,9 @@ func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]s
 	var structField = paramType.Field(i)
 	fieldName := structField.Name
 	fieldTag := structField.Tag
-	fieldType := structField.Type.Name()
-
+	fieldType := GetFieldType(structField)
 	field := paramElem.FieldByName(fieldName)
+
 	paramValue := rows[fieldName]
 
 	if paramValue == "" {
@@ -111,12 +105,6 @@ func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]s
 		if paramValue == "" {
 			return
 		}
-	}
-
-	// Unify the handling of numeric variable types to remove the bit identifiers and facilitate the following judgments
-	var fType = GetFieldType(fieldType)
-	if fType != "" {
-		fieldType = fType
 	}
 
 	switch fieldType {
@@ -158,7 +146,18 @@ func setValue(paramType reflect.Type, paramElem reflect.Value, rows map[string]s
 }
 
 // GetFieldType get field type
-func GetFieldType(fieldType string) string {
+func GetFieldType(structField reflect.StructField) string {
+	fieldType := structField.Type.Kind().String()
+	if fieldType == "" {
+		fieldType = structField.Type.Name()
+	}
+
+	if fieldType == "" {
+		return ""
+	}
+
+	fieldType = strings.ToLower(fieldType)
+
 	if strings.HasPrefix(fieldType, commons.Int) {
 		return commons.Int
 	}
@@ -171,7 +170,7 @@ func GetFieldType(fieldType string) string {
 		return commons.Uint
 	}
 
-	return ""
+	return fieldType
 }
 
 // errorPrint
