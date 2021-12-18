@@ -31,9 +31,9 @@ go get github.com/go-sql-driver/mysql
 ***Query specified table data based on custom conditions***
 ```go
 conditions := make([]*entity.Condition,0)
-conditions = append(conditions, &entity.Condition{Key:"id > ?", Val: 10})
-conditions = append(conditions, &entity.Condition{Key:"and user_name = ?", Val: "bee"})
-conditions = append(conditions, &entity.Condition{Key: "order by create_time desc", Val: entity.NotWhere})
+conditions = append(conditions, entity.GetCondition("id > ?", 10))
+conditions = append(conditions, entity.GetCondition("and (user_name = ? or age > ?)", "bee", 18))
+conditions = append(conditions, entity.GetCondition("order by create_time desc", entity.NotWhere))
 
 resultMap, err := operation.GetDBTemplate("Data source name").Select("table name", conditions)
 ```
@@ -41,19 +41,25 @@ resultMap, err := operation.GetDBTemplate("Data source name").Select("table name
 ***Update data according to conditions***
 
 ```go
+// Conditions set
 conditions := make([]*entity.Condition,0)
-conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 1})
+conditions = append(conditions, entity.GetCondition("id = ?", 1))
 
+// Data settings to be modified
 data := ResultStruct{UserName: "TestNoSqlUpdate"}
-operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructToMapIgnore(&data, data, true), conditions)
+
+// Execute the modification operation
+result, err := operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructToMapIgnore(&data, data, true),conditions)
 
 ```
 
 ***Deleting data based on conditions***
 ```go
+// Set delete conditions
 conditions := make([]*entity.Condition,0)
-conditions = append(conditions, &entity.Condition{Key:"id = ?", Val: 2})
+conditions = append(conditions, entity.GetCondition("id = ?", 2))
 
+// Perform a delete operation
 _, err := operation.GetDBTemplate("Data source name").Delete("table name", conditions)
 ```
 
