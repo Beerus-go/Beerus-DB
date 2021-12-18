@@ -15,7 +15,7 @@ can use struct as parameters to operate the database, etc.
 ## Installation
 
 ```shell
-go get github.com/yuyenews/Beerus-DB
+go get github.com/yuyenews/Beerus-DB@v1.1.1
 
 go get github.com/go-sql-driver/mysql
 ```
