@@ -7,14 +7,17 @@ import (
 	"github.com/yuyenews/Beerus-DB/operation/entity"
 	"github.com/yuyenews/Beerus-DB/pool"
 	"log"
+	"strconv"
 	"testing"
 )
 
 func TestUpdate(t *testing.T) {
 	initDbPool()
+	snowflake, err := dbutil.New(5)
+	snowflakeId, err := snowflake.Generate()
 
 	param := make([]interface{}, 2)
-	param[0] = "TestUpdate"
+	param[0] = strconv.FormatUint(snowflakeId, 10)
 	param[1] = 1
 
 	operation.GetDBTemplate("dbPoolTest").Exec("update xt_message_board set user_name = ? where id = ?", param)
@@ -36,9 +39,12 @@ func TestUpdate(t *testing.T) {
 func TestUpdateByMap(t *testing.T) {
 	initDbPool()
 
-	res := ResultStruct{Id: 1, UserName: "TestUpdateByMap"}
+	snowflake, err := dbutil.New(5)
+	snowflakeId, err := snowflake.Generate()
 
-	operation.GetDBTemplate("dbPoolTest").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+	res := ResultStruct{Id: 1, UserName: strconv.FormatUint(snowflakeId, 10)}
+
+	operation.GetDBTemplate("dbPoolTest").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res))
 
 	param2 := make([]interface{}, 1)
 	param2[0] = res.Id
@@ -65,9 +71,12 @@ func TestUpdateTx(t *testing.T) {
 		return
 	}
 
-	res := ResultStruct{Id: 1, UserName: "TestUpdateTx"}
+	snowflake, err := dbutil.New(5)
+	snowflakeId, err := snowflake.Generate()
 
-	ss, err := operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+	res := ResultStruct{Id: 1, UserName: strconv.FormatUint(snowflakeId, 10)}
+
+	ss, err := operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res))
 	if err != nil {
 		db.Rollback(id)
 		t.Error("TestUpdateTx: " + err.Error())
@@ -93,7 +102,9 @@ func TestUpdateTx(t *testing.T) {
 
 	// ------------------------------- test commit -------------------------------
 
-	res.UserName = "TestUpdateTxCommit"
+	snowflakeId, err = snowflake.Generate()
+
+	res.UserName = strconv.FormatUint(snowflakeId, 10)
 
 	id, err = db.Transaction()
 	if err != nil {
@@ -101,7 +112,7 @@ func TestUpdateTx(t *testing.T) {
 		return
 	}
 
-	ss, err = operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+	ss, err = operation.GetDBTemplateTx(id, "dbPoolTest").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res))
 	if err != nil {
 		db.Rollback(id)
 		t.Error("TestUpdateTx: " + err.Error())
@@ -151,7 +162,7 @@ func TestSelectList(t *testing.T) {
 	}
 	for _, row := range resultMap {
 		res := ResultStruct{}
-		dbutil.MapToStruct(row, &res, res)
+		dbutil.MapToStruct(row, &res)
 
 		print(res.Id)
 		print(" | ")
@@ -173,7 +184,7 @@ func TestSelectListNoParameters(t *testing.T) {
 	}
 	for _, row := range resultMap {
 		res := ResultStruct{}
-		dbutil.MapToStruct(row, &res, res)
+		dbutil.MapToStruct(row, &res)
 
 		print(res.Id)
 		print(" | ")
@@ -190,7 +201,7 @@ func TestSelectListByMap(t *testing.T) {
 
 	res := ResultStruct{Id: 1}
 
-	resultMap, err := operation.GetDBTemplate("dbPoolTest").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res, res))
+	resultMap, err := operation.GetDBTemplate("dbPoolTest").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res))
 	if err != nil {
 		t.Error("TestSelectListByMap: " + err.Error())
 		return
@@ -198,7 +209,7 @@ func TestSelectListByMap(t *testing.T) {
 
 	for _, row := range resultMap {
 		res := ResultStruct{}
-		dbutil.MapToStruct(row, &res, res)
+		dbutil.MapToStruct(row, &res)
 
 		print(res.Id)
 		print(" | ")
@@ -227,7 +238,7 @@ func TestNoSqlSelect(t *testing.T) {
 
 	for _, row := range resultMap {
 		res := ResultStruct{}
-		dbutil.MapToStruct(row, &res, res)
+		dbutil.MapToStruct(row, &res)
 
 		print(res.Id)
 		print(" | ")
@@ -242,11 +253,14 @@ func TestNoSqlSelect(t *testing.T) {
 func TestNoSqlUpdate(t *testing.T) {
 	initDbPool()
 
+	snowflake, err := dbutil.New(5)
+	snowflakeId, err := snowflake.Generate()
+
 	conditions := make([]*entity.Condition, 0)
 	conditions = append(conditions, entity.GetCondition("id = ?", 1))
 
-	data := ResultStruct{UserName: "TestNoSqlUpdate"}
-	operation.GetDBTemplate("dbPoolTest").Update("xt_message_board", dbutil.StructToMapIgnore(&data, data, true), conditions)
+	data := ResultStruct{UserName: strconv.FormatUint(snowflakeId, 10)}
+	operation.GetDBTemplate("dbPoolTest").Update("xt_message_board", dbutil.StructToMapIgnore(&data, true), conditions)
 
 	param2 := make([]interface{}, 1)
 	param2[0] = 1
@@ -271,7 +285,7 @@ func TestNoSqlInsert(t *testing.T) {
 		UpdateTime: "2021-12-09 13:50:00",
 	}
 
-	result, err := operation.GetDBTemplate("dbPoolTest").Insert("xt_message_board", dbutil.StructToMapIgnore(&data, data, true))
+	result, err := operation.GetDBTemplate("dbPoolTest").Insert("xt_message_board", dbutil.StructToMapIgnore(&data, true))
 	if err != nil {
 		t.Error("TestNoSqlInsert: " + err.Error())
 		return
@@ -338,7 +352,7 @@ func TestSelectPage(t *testing.T) {
 
 	for _, row := range result.DataList {
 		res := ResultStruct{}
-		dbutil.MapToStruct(row, &res, res)
+		dbutil.MapToStruct(row, &res)
 
 		print(res.Id)
 		print(" | ")

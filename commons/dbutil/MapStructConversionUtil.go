@@ -15,9 +15,9 @@ const (
 )
 
 // MapToStruct map to struct
-func MapToStruct(rows map[string]string, pointResult interface{}, result interface{}) {
-	var paramType = reflect.TypeOf(result)
+func MapToStruct(rows map[string]string, pointResult interface{}) {
 	var paramElem = reflect.ValueOf(pointResult).Elem()
+	var paramType = paramElem.Type()
 
 	fieldNum := paramType.NumField()
 	for i := 0; i < fieldNum; i++ {
@@ -26,17 +26,17 @@ func MapToStruct(rows map[string]string, pointResult interface{}, result interfa
 }
 
 // StructToMap struct to map
-func StructToMap(pointData interface{}, data interface{}) map[string]interface{} {
-	return StructToMapIgnore(pointData, data, false)
+func StructToMap(pointData interface{}) map[string]interface{} {
+	return StructToMapIgnore(pointData, false)
 }
 
 // StructToMapIgnore struct to map
-func StructToMapIgnore(pointData interface{}, data interface{}, isIgnore bool) map[string]interface{} {
+func StructToMapIgnore(pointData interface{}, isIgnore bool) map[string]interface{} {
 
 	result := make(map[string]interface{})
 
-	var paramType = reflect.TypeOf(data)
 	var paramElem = reflect.ValueOf(pointData).Elem()
+	var paramType = paramElem.Type()
 
 	fieldNum := paramType.NumField()
 	for i := 0; i < fieldNum; i++ {

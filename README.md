@@ -15,7 +15,7 @@ can use struct as parameters to operate the database, etc.
 ## Installation
 
 ```shell
-go get github.com/yuyenews/Beerus-DB@v1.1.1
+go get github.com/yuyenews/Beerus-DB@v1.1.2
 
 go get github.com/go-sql-driver/mysql
 ```
@@ -49,7 +49,7 @@ conditions = append(conditions, entity.GetCondition("id = ?", 1))
 data := ResultStruct{UserName: "TestNoSqlUpdate"}
 
 // Execute the modification operation
-result, err := operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructToMapIgnore(&data, data, true),conditions)
+result, err := operation.GetDBTemplate("Data source name").Update("table name", dbutil.StructToMapIgnore(&data, true),conditions)
 
 ```
 
@@ -72,7 +72,7 @@ data := ResultStruct{
 		UpdateTime: "2021-12-09 13:50:00",
 	}
 
-result, err := operation.GetDBTemplate("Data source name").Insert("table name", dbutil.StructToMapIgnore(&data, data, true))
+result, err := operation.GetDBTemplate("Data source name").Insert("table name", dbutil.StructToMapIgnore(&data, true))
 
 ```
 
@@ -84,7 +84,7 @@ sql can be any one of add, delete, modify
 ```go
 // with struct as parameter
 res := ResultStruct{Id: 1, UserName: "TestUpdateByMap"}
-operation.GetDBTemplate("Data source name").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+operation.GetDBTemplate("Data source name").ExecByMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res))
 
 // Using arrays as parameters
 param := make([]interface{}, 2)
@@ -107,7 +107,7 @@ resultMap, err := operation.GetDBTemplate("Data source name").SelectList("select
 
 // with struct as parameter
 res := ResultStruct{Id: 1}
-resultMap, err := operation.GetDBTemplate("Data source name").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res, res))
+resultMap, err := operation.GetDBTemplate("Data source name").SelectListByMap("select * from xt_message_board where id < {id}", dbutil.StructToMap(&res))
 ```
 
 ***Paging queries***
@@ -118,7 +118,7 @@ data := ResultStruct{
     UserEmail: "xxxxx@163.com",
 }
 
-param := entity.PageParam{CurrentPage: 1, PageSize: 20, Params: dbutil.StructToMap(&data, data)}
+param := entity.PageParam{CurrentPage: 1, PageSize: 20, Params: dbutil.StructToMap(&data)}
 result, err := operation.GetDBTemplate("Data source name").SelectPage("select * from xt_message_board where user_name = {user_name} and user_email = {user_email}", param)
 ```
 
@@ -133,7 +133,7 @@ if err != nil {
 
 res := ResultStruct{Id: 1, UserName: "TestUpdateTx"}
 
-ss, err := operation.GetDBTemplateTx(id, "Data source name").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res, res))
+ss, err := operation.GetDBTemplateTx(id, "Data source name").ExecByTxMap("update xt_message_board set user_name = {user_name} where id = {id}", dbutil.StructToMap(&res))
 if err != nil {
     db.Rollback(id)
     t.Error("Data source name: " + err.Error())
