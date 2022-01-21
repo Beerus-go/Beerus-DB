@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/yuyenews/Beerus-DB/commons/builder"
 	"github.com/yuyenews/Beerus-DB/commons/dbutil"
 	"github.com/yuyenews/Beerus-DB/db"
 	"github.com/yuyenews/Beerus-DB/operation"
@@ -224,10 +225,11 @@ func TestSelectListByMap(t *testing.T) {
 func TestNoSqlSelect(t *testing.T) {
 	initDbPool()
 
-	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, entity.GetCondition("id > ? and user_name = ?", 10, "testTx"))
-	conditions = append(conditions, entity.GetCondition("and id < ?", 23))
-	conditions = append(conditions, entity.GetCondition("order by id desc", entity.NotWhere))
+	conditions := builder.Create().
+		Add("id > ? and user_name = ?", 10, "testTx").
+		Add("and id < ?", 23).
+		Add("order by id desc", entity.NotWhere).
+		Build()
 
 	resultMap, err := operation.GetDBTemplate("dbPoolTest").Select("xt_message_board", conditions)
 
@@ -256,8 +258,9 @@ func TestNoSqlUpdate(t *testing.T) {
 	snowflake, err := dbutil.New(5)
 	snowflakeId, err := snowflake.Generate()
 
-	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, entity.GetCondition("id = ?", 1))
+	conditions := builder.Create().
+		Add("id = ?", 1).
+		Build()
 
 	data := ResultStruct{UserName: strconv.FormatUint(snowflakeId, 10)}
 	operation.GetDBTemplate("dbPoolTest").Update("xt_message_board", dbutil.StructToMapIgnore(&data, true), conditions)
@@ -314,8 +317,9 @@ func TestNoSqlInsert(t *testing.T) {
 func TestNoSqlDelete(t *testing.T) {
 	initDbPool()
 
-	conditions := make([]*entity.Condition, 0)
-	conditions = append(conditions, entity.GetCondition("id = ?", 14))
+	conditions := builder.Create().
+		Add("id = ?", 14).
+		Build()
 
 	_, err := operation.GetDBTemplate("dbPoolTest").Delete("xt_message_board", conditions)
 

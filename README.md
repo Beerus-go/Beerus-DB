@@ -15,7 +15,7 @@ can use struct as parameters to operate the database, etc.
 ## Installation
 
 ```shell
-go get github.com/yuyenews/Beerus-DB@v1.1.2
+go get github.com/yuyenews/Beerus-DB@v1.1.3
 
 go get github.com/go-sql-driver/mysql
 ```
@@ -30,10 +30,11 @@ go get github.com/go-sql-driver/mysql
 
 ***Query specified table data based on custom conditions***
 ```go
-conditions := make([]*entity.Condition,0)
-conditions = append(conditions, entity.GetCondition("id > ?", 10))
-conditions = append(conditions, entity.GetCondition("and (user_name = ? or age > ?)", "bee", 18))
-conditions = append(conditions, entity.GetCondition("order by create_time desc", entity.NotWhere))
+conditions := builder.Create().
+	Add("id > ?", 10).
+	Add("and (user_name = ? or age > ?)", "bee", 18).
+	Add("order by create_time desc", entity.NotWhere).
+	Build()
 
 resultMap, err := operation.GetDBTemplate("Data source name").Select("table name", conditions)
 ```
@@ -42,8 +43,9 @@ resultMap, err := operation.GetDBTemplate("Data source name").Select("table name
 
 ```go
 // Conditions set
-conditions := make([]*entity.Condition,0)
-conditions = append(conditions, entity.GetCondition("id = ?", 1))
+conditions := builder.Create().
+	Add("id = ?", 1).
+	Build()
 
 // Data settings to be modified
 data := ResultStruct{UserName: "TestNoSqlUpdate"}
@@ -56,8 +58,9 @@ result, err := operation.GetDBTemplate("Data source name").Update("table name", 
 ***Deleting data based on conditions***
 ```go
 // Set delete conditions
-conditions := make([]*entity.Condition,0)
-conditions = append(conditions, entity.GetCondition("id = ?", 2))
+conditions := builder.Create().
+	Add("id = ?", 2).
+	Build()
 
 // Perform a delete operation
 _, err := operation.GetDBTemplate("Data source name").Delete("table name", conditions)
