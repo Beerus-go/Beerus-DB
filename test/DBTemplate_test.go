@@ -1,12 +1,12 @@
 package test
 
 import (
-	"github.com/yuyenews/Beerus-DB/commons/builder"
-	"github.com/yuyenews/Beerus-DB/commons/dbutil"
-	"github.com/yuyenews/Beerus-DB/db"
-	"github.com/yuyenews/Beerus-DB/operation"
-	"github.com/yuyenews/Beerus-DB/operation/entity"
-	"github.com/yuyenews/Beerus-DB/pool"
+	"github.com/Beerus-go/Beerus-DB/commons/builder"
+	"github.com/Beerus-go/Beerus-DB/commons/dbutil"
+	"github.com/Beerus-go/Beerus-DB/db"
+	"github.com/Beerus-go/Beerus-DB/operation"
+	"github.com/Beerus-go/Beerus-DB/operation/entity"
+	"github.com/Beerus-go/Beerus-DB/pool"
 	"log"
 	"strconv"
 	"testing"

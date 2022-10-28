@@ -3,8 +3,8 @@ package operation
 import (
 	"database/sql"
 	"errors"
-	"github.com/yuyenews/Beerus-DB/db"
-	"github.com/yuyenews/Beerus-DB/operation/entity"
+	"github.com/Beerus-go/Beerus-DB/db"
+	"github.com/Beerus-go/Beerus-DB/operation/entity"
 	"strconv"
 	"strings"
 )

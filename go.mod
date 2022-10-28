@@ -1,4 +1,4 @@
-module github.com/yuyenews/Beerus-DB
+module github.com/Beerus-go/Beerus-DB
 
 go 1.17
 

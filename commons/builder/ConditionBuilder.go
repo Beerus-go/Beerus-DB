@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/yuyenews/Beerus-DB/operation/entity"
+import "github.com/Beerus-go/Beerus-DB/operation/entity"
 
 // ConditionBuilder Used to build conditions more easily
 type ConditionBuilder struct {

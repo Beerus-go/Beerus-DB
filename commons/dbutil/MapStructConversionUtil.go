@@ -1,7 +1,7 @@
 package dbutil
 
 import (
-	"github.com/yuyenews/Beerus-DB/commons"
+	"github.com/Beerus-go/Beerus-DB/commons"
 	"log"
 	"reflect"
 	"strconv"

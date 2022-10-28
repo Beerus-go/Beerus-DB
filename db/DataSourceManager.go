@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/yuyenews/Beerus-DB/pool"
+	"github.com/Beerus-go/Beerus-DB/pool"
 )
 
 var dataSource = make(map[string]*pool.DbPool)

@@ -1,7 +1,7 @@
 package operation
 
 import (
-	"github.com/yuyenews/Beerus-DB/operation/entity"
+	"github.com/Beerus-go/Beerus-DB/operation/entity"
 	"log"
 	"regexp"
 	"strings"

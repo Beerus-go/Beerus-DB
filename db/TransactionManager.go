@@ -3,8 +3,8 @@ package db
 import (
 	"database/sql"
 	"errors"
-	"github.com/yuyenews/Beerus-DB/commons/dbutil"
-	"github.com/yuyenews/Beerus-DB/pool"
+	"github.com/Beerus-go/Beerus-DB/commons/dbutil"
+	"github.com/Beerus-go/Beerus-DB/pool"
 	"strconv"
 )
 
